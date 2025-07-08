@@ -17,7 +17,6 @@ if not st.session_state.logged_in:
         if username == "Saray MGMT" and password == "Ghassan@5699@0805":
             st.session_state.logged_in = True
             st.rerun()
-
         else:
             st.error("Invalid credentials")
     st.stop()
@@ -48,6 +47,8 @@ view_by = st.sidebar.radio("View Charts By", ["Monthly", "Daily"])
 # ========== LOAD DATA ==========
 df = pd.read_excel(file_name, sheet_name="Raw Data")
 df = df[df["Arrival2"].notna()]
+df["Online vs Offline"] = df["Online/Offline"]  # <-- Fix here to use Column AL
+
 df["ADR"] = pd.to_numeric(df["Net base rate"], errors='coerce') / pd.to_numeric(df["Nights"], errors='coerce')
 df["ADR"] = df["ADR"].replace([float("inf"), -float("inf")], pd.NA)
 df["TTV"] = df["TTV"] * rate
@@ -58,10 +59,10 @@ df["Arrival Month"] = df["Arrival Date"].dt.to_period("M").astype(str)
 # ========== FILTERS ==========
 filters = {
     "Room Type": "Type",
-    "Arrival Month": "Arrival Month ",
+    "Arrival Month": "Arrival Month",
     "Meal Plan": "Meal Plan",
     "Release Days": "Release Days",
-    "Online vs Offline": "Online/Offline",
+    "Online vs Offline": "Online vs Offline",
     "Arrival Year": "Arrival Year",
     "Channel": "Channel",
     "Nationality": "Nationality",
@@ -81,10 +82,7 @@ col2.metric("Average ADR", f"{df['ADR'].mean():,.0f} {symbol}")
 col3.metric("Total Nights", f"{df['Nights'].sum():,.0f}")
 
 # ========== SUMMARY CHARTS ==========
-# ========== SUMMARY CHARTS ==========
 st.markdown("## 📈 Revenue & Nights Over Time")
-
-df["Arrival Date"] = pd.to_datetime(df["Arrival2"], errors="coerce")
 
 if view_by == "Monthly":
     df["Period"] = df["Arrival Date"].dt.to_period("M").astype(str)
@@ -97,13 +95,9 @@ else:
     x_labels = df.sort_values("SortKey")["Period"].drop_duplicates().tolist()
     x_title = "Date"
 
-df_grouped = df.groupby("Period").agg({
-    "TTV": "sum",
-    "Nights": "sum"
-}).reindex(x_labels).reset_index().rename(columns={"index": "Period"})
+df_grouped = df.groupby("Period").agg({"TTV": "sum", "Nights": "sum"}).reindex(x_labels).reset_index().rename(columns={"index": "Period"})
 
 col1, col2 = st.columns(2)
-
 with col1:
     st.altair_chart(
         alt.Chart(df_grouped).mark_bar(color="#F58518").encode(
