@@ -5,21 +5,23 @@ import altair as alt
 # ========== CONFIG ==========
 st.set_page_config(page_title="Hotel Dashboard", layout="wide")
 
-def check_login():
-    st.sidebar.title("Login")
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
+# ========== AUTHENTICATION ==========
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-    valid_username = "Saray MGMT"
-    valid_password = "Ghassan@5699@0805"
-
-    if username == valid_username and password == valid_password:
-        return True
-    st.error("Invalid login. Please try again.")
-    return False
-
-if not check_login():
+if not st.session_state.logged_in:
+    st.title("🔒 Saray MGMT Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username == "Saray MGMT" and password == "Ghassan@5699@0805":
+            st.session_state.logged_in = True
+            st.experimental_rerun()
+        else:
+            st.error("Invalid credentials")
     st.stop()
+
+# ========== LOGGED IN ==========
 
 # ========== HEADER ==========
 st.markdown(
